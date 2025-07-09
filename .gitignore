@@ -1,0 +1,23 @@
+# dependencies
+/node_modules
+
+# production
+/dist
+
+# environment variables
+.env*
+!.env.example
+
+# system files
+.DS_Store
+Thumbs.db
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# editor/IDE
+.vscode/
+.idea/
+
