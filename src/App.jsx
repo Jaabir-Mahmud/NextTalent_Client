@@ -11,10 +11,12 @@ import SignUp from './pages/SignUp';
 import Login from './pages/Login';
 import PostJob from './pages/PostJob';
 import AdminDashboard from './pages/AdminDashboard';
+import About from './pages/About';
 import { AuthProvider, useAuth } from './AuthContext';
 import './App.css';
 import { getTheme } from './theme';
 import { ThemeProvider } from '@mui/material/styles';
+import Footer from './components/Footer';
 
 function AppRoutes({ isDark, toggleDark }) {
   const { loading } = useAuth();
@@ -34,8 +36,10 @@ function AppRoutes({ isDark, toggleDark }) {
           <Route path="/post-job" element={<PostJob />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/about" element={<About isDark={isDark} />} />
         </Routes>
       </div>
+      <Footer isDark={isDark} />
     </>
   );
 }
