@@ -1,18 +1,19 @@
 import React, { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, signOut, sendEmailVerification } from "firebase/auth";
 import { auth } from "../firebase";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
+import Swal from 'sweetalert2';
 
 const db = getFirestore();
 
 const SignUp = () => {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("Job Seeker");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -20,10 +21,8 @@ const SignUp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      Swal.fire({ icon: 'error', title: 'Passwords do not match', confirmButtonColor: '#a78bfa' });
       return;
     }
     setIsLoading(true);
@@ -35,14 +34,27 @@ const SignUp = () => {
       );
       const user = userCredential.user;
       await setDoc(doc(db, "users", user.uid), {
+        firstName,
+        lastName,
         email,
         role,
         createdAt: new Date(),
       });
-      setSuccess("Account created successfully! Redirecting...");
-      setTimeout(() => navigate("/login"), 1500);
+      if (!user.emailVerified) {
+        await sendEmailVerification(user, {
+          url: window.location.origin + "/login",
+          handleCodeInApp: false,
+        });
+      }
+      await signOut(auth);
+      Swal.fire({
+        icon: 'success',
+        title: 'Account created!',
+        text: 'Please check your email for a verification link before logging in.',
+        confirmButtonColor: '#a78bfa',
+      }).then(() => navigate("/login"));
     } catch (err) {
-      setError(err.message);
+      Swal.fire({ icon: 'error', title: 'Signup Failed', text: err.message, confirmButtonColor: '#a78bfa' });
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +80,34 @@ const SignUp = () => {
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                    placeholder="John"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Doe"
+                  />
+                </div>
+              </div>
   <div>
     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
       Email address
@@ -188,17 +228,7 @@ const SignUp = () => {
     </select>
   </div>
 
-  {error && (
-    <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg">
-      {error}
-    </div>
-  )}
-
-  {success && (
-    <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm rounded-lg">
-      {success}
-    </div>
-  )}
+  {/* Removed error and success message divs as they are replaced by SweetAlert2 */}
 
   <button
     type="submit"
