@@ -13,7 +13,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import Swal from 'sweetalert2';
-import { getFirestore, collection, getDocs, updateDoc, doc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, updateDoc, doc, setDoc, addDoc } from "firebase/firestore";
+import { EmailAuthProvider } from "firebase/auth";
 import { startOfDay, isSameDay } from 'date-fns';
 import { Line } from 'react-chartjs-2';
 import {
@@ -73,7 +74,48 @@ const AdminDashboard = ({ isDark, toggleDark }) => {
   const [signupTrend, setSignupTrend] = useState({ labels: [], data: [] });
   const [jobTrend, setJobTrend] = useState({ labels: [], data: [] });
   const [categoryData, setCategoryData] = useState({ labels: [], data: [] });
+  const [feedback, setFeedback] = useState([]);
+  const [settings, setSettings] = useState({ displayName: '', emailNotifications: 'Enabled', theme: 'system' });
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [replies, setReplies] = useState({});
+  const [profilePic, setProfilePic] = useState("");
+  const [profilePicPreview, setProfilePicPreview] = useState("");
+  const [twoFAEnabled, setTwoFAEnabled] = useState(false); // mock
   const navigate = useNavigate();
+
+  // Fetch replies for all feedback
+  const fetchReplies = async (feedbackList) => {
+    const allReplies = {};
+    for (const fb of feedbackList) {
+      const repliesSnap = await getDocs(collection(db, 'feedback', fb.id, 'replies'));
+      allReplies[fb.id] = repliesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+    setReplies(allReplies);
+  };
+
+  // Fetch feedback from Firestore
+  const fetchFeedback = async () => {
+    const snap = await getDocs(collection(db, 'feedback'));
+    const fbList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setFeedback(fbList);
+    await fetchReplies(fbList);
+  };
+
+  // Fetch admin settings from Firestore
+  const fetchSettings = async () => {
+    if (!user) return;
+    const snap = await getDocs(collection(db, 'adminSettings'));
+    // If settings exist for this user, use them
+    const userSettings = snap.docs.find(d => d.id === user.uid)?.data();
+    setSettings({
+      displayName: userSettings?.displayName || 'Admin',
+      emailNotifications: userSettings?.emailNotifications || 'Enabled',
+      theme: userSettings?.theme || 'system',
+    });
+    setProfilePic(userSettings?.profilePic || "");
+    setTwoFAEnabled(userSettings?.twoFAEnabled || false);
+  };
 
   useEffect(() => {
     if (tab === 1) fetchUsers();
@@ -84,6 +126,8 @@ const AdminDashboard = ({ isDark, toggleDark }) => {
       fetchJobTrend();
       fetchCategoryData();
     }
+    if (tab === 4) fetchFeedback();
+    if (tab === 5) fetchSettings();
     // eslint-disable-next-line
   }, [tab]);
 
@@ -220,6 +264,36 @@ const AdminDashboard = ({ isDark, toggleDark }) => {
       labels: sorted.map(([cat]) => cat),
       data: sorted.map(([, count]) => count)
     });
+  };
+
+  // Download helpers
+  const downloadCSV = (data, filename) => {
+    const csvRows = [];
+    const headers = Object.keys(data[0] || {});
+    csvRows.push(headers.join(','));
+    for (const row of data) {
+      csvRows.push(headers.map(h => JSON.stringify(row[h] ?? '')).join(','));
+    }
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  // Handle profile picture upload (mock: just preview, real: upload to Firebase Storage)
+  const handleProfilePicChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfilePicPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+    // TODO: Upload to Firebase Storage and get URL, then save to Firestore
+    // For now, just preview
   };
 
   return (
@@ -486,7 +560,207 @@ const AdminDashboard = ({ isDark, toggleDark }) => {
             </div>
           </Box>
         )}
-        {/* TODO: Add Reports, Feedback, Settings tabs */}
+        {tab === 3 && (
+          <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, p: 3, mb: 4 }}>
+            <Typography variant="h5" sx={{ mb: 2, color: isDark ? '#f3f4f6' : '#18181b' }}>Reports</Typography>
+            <Typography sx={{ mb: 2, color: isDark ? '#d1d5db' : '#374151' }}>
+              Download user, job, and feedback data for analysis. More analytics coming soon!
+            </Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{ mb: 2, mr: 2 }}
+              onClick={async () => {
+                const snap = await getDocs(collection(db, 'users'));
+                downloadCSV(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })), 'users.csv');
+              }}
+            >
+              Download Users CSV
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{ mb: 2, mr: 2 }}
+              onClick={async () => {
+                const snap = await getDocs(collection(db, 'jobs'));
+                downloadCSV(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })), 'jobs.csv');
+              }}
+            >
+              Download Jobs CSV
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{ mb: 2 }}
+              onClick={async () => {
+                const snap = await getDocs(collection(db, 'feedback'));
+                downloadCSV(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })), 'feedback.csv');
+              }}
+            >
+              Download Feedback CSV
+            </Button>
+          </Box>
+        )}
+        {tab === 4 && (
+          <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, p: 3, mb: 4 }}>
+            <Typography variant="h5" sx={{ mb: 2, color: isDark ? '#f3f4f6' : '#18181b' }}>Feedback</Typography>
+            <Typography sx={{ mb: 2, color: isDark ? '#d1d5db' : '#374151' }}>
+              See user feedback and respond to improve the platform.
+            </Typography>
+            {feedback.length === 0 && <Typography sx={{ color: isDark ? '#a1a1aa' : '#6b7280' }}>No feedback yet.</Typography>}
+            {feedback.map(fb => (
+              <Box key={fb.id} sx={{ mb: 2, p: 2, borderRadius: 1, bgcolor: isDark ? '#23232a' : '#f3f4f6' }}>
+                <Typography sx={{ color: isDark ? '#a5b4fc' : '#6366f1', fontWeight: 600 }}>{fb.user || fb.email || 'Anonymous'}</Typography>
+                <Typography sx={{ color: isDark ? '#f3f4f6' : '#18181b' }}>{fb.message}</Typography>
+                <Typography sx={{ color: isDark ? '#a1a1aa' : '#6b7280', fontSize: 12 }}>
+                  {fb.date && fb.date.seconds
+                    ? new Date(fb.date.seconds * 1000).toLocaleString()
+                    : (typeof fb.date === 'string' ? fb.date : '')}
+                </Typography>
+                {/* Replies */}
+                {replies[fb.id] && replies[fb.id].length > 0 && (
+                  <Box sx={{ mt: 2, ml: 2, pl: 2, borderLeft: `2px solid ${isDark ? '#6366f1' : '#6366f1'}` }}>
+                    <Typography sx={{ color: isDark ? '#a5b4fc' : '#6366f1', fontWeight: 500, mb: 1 }}>Admin Replies:</Typography>
+                    {replies[fb.id].map(r => (
+                      <Box key={r.id} sx={{ mb: 1 }}>
+                        <Typography sx={{ color: isDark ? '#f3f4f6' : '#18181b' }}>{r.text}</Typography>
+                        <Typography sx={{ color: isDark ? '#a1a1aa' : '#6b7280', fontSize: 11 }}>
+                          {r.date && r.date.seconds
+                            ? new Date(r.date.seconds * 1000).toLocaleString()
+                            : (typeof r.date === 'string' ? r.date : '')}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+                {/* Reply form */}
+                {replyingTo === fb.id ? (
+                  <form
+                    onSubmit={async e => {
+                      e.preventDefault();
+                      if (!replyText.trim()) return;
+                      await addDoc(collection(db, 'feedback', fb.id, 'replies'), {
+                        text: replyText,
+                        date: new Date().toLocaleString(),
+                        admin: user?.email || 'Admin',
+                      });
+                      setReplyText("");
+                      setReplyingTo(null);
+                      fetchFeedback();
+                    }}
+                    style={{ marginTop: 8 }}
+                  >
+                    <input
+                      value={replyText}
+                      onChange={e => setReplyText(e.target.value)}
+                      placeholder="Type your reply..."
+                      style={{ width: '70%', padding: 8, borderRadius: 4, border: '1px solid #ccc', background: isDark ? '#23232a' : '#fff', color: isDark ? '#f3f4f6' : '#18181b', marginRight: 8 }}
+                    />
+                    <Button type="submit" variant="contained" color="primary" size="small">Send</Button>
+                    <Button onClick={() => { setReplyingTo(null); setReplyText(""); }} size="small" sx={{ ml: 1 }}>Cancel</Button>
+                  </form>
+                ) : (
+                  <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => setReplyingTo(fb.id)}>Reply</Button>
+                )}
+              </Box>
+            ))}
+          </Box>
+        )}
+        {tab === 5 && (
+          <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, p: 3, mb: 4, maxWidth: 400 }}>
+            <Typography variant="h5" sx={{ mb: 2, color: isDark ? '#f3f4f6' : '#18181b' }}>Settings</Typography>
+            <Typography sx={{ mb: 2, color: isDark ? '#d1d5db' : '#374151' }}>
+              Manage your admin preferences.
+            </Typography>
+            {/* Profile Picture */}
+            <Box sx={{ mb: 3 }}>
+              <Typography sx={{ color: isDark ? '#f3f4f6' : '#18181b', mb: 1 }}>Profile Picture</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <img
+                  src={profilePicPreview || profilePic || 'https://ui-avatars.com/api/?name=Admin'}
+                  alt="Profile Preview"
+                  style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', marginRight: 16, border: `2px solid ${isDark ? '#6366f1' : '#6366f1'}` }}
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePicChange}
+                  style={{ color: isDark ? '#f3f4f6' : '#18181b' }}
+                />
+              </Box>
+              <Typography sx={{ color: isDark ? '#a1a1aa' : '#6b7280', fontSize: 12, mt: 1 }}>
+                (Preview only. To enable real upload, connect Firebase Storage.)
+              </Typography>
+            </Box>
+            <form onSubmit={async e => {
+              e.preventDefault();
+              if (!user) return;
+              const form = e.target;
+              const newSettings = {
+                displayName: form.displayName.value,
+                emailNotifications: form.emailNotifications.value,
+                theme: form.theme.value,
+                profilePic: profilePicPreview || profilePic || '',
+                twoFAEnabled: twoFAEnabled,
+              };
+              await setDoc(doc(db, 'adminSettings', user.uid), newSettings, { merge: true });
+              setSettings(newSettings);
+              setProfilePic(profilePicPreview || profilePic || '');
+              alert('Settings saved!');
+            }}>
+              <Box sx={{ mb: 2 }}>
+                <label style={{ color: isDark ? '#f3f4f6' : '#18181b', display: 'block', marginBottom: 4 }}>Display Name</label>
+                <input name="displayName" type="text" defaultValue={settings.displayName} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', background: isDark ? '#23232a' : '#fff', color: isDark ? '#f3f4f6' : '#18181b' }} />
+              </Box>
+              <Box sx={{ mb: 2 }}>
+                <label style={{ color: isDark ? '#f3f4f6' : '#18181b', display: 'block', marginBottom: 4 }}>Email Notifications</label>
+                <select name="emailNotifications" defaultValue={settings.emailNotifications} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', background: isDark ? '#23232a' : '#fff', color: isDark ? '#f3f4f6' : '#18181b' }}>
+                  <option>Enabled</option>
+                  <option>Disabled</option>
+                </select>
+              </Box>
+              <Box sx={{ mb: 2 }}>
+                <label style={{ color: isDark ? '#f3f4f6' : '#18181b', display: 'block', marginBottom: 4 }}>Theme</label>
+                <select name="theme" defaultValue={settings.theme} style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', background: isDark ? '#23232a' : '#fff', color: isDark ? '#f3f4f6' : '#18181b' }}>
+                  <option value="system">System</option>
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </Box>
+              {/* 2FA Toggle (mock) */}
+              <Box sx={{ mb: 2 }}>
+                <label style={{ color: isDark ? '#f3f4f6' : '#18181b', display: 'block', marginBottom: 4 }}>Two-Factor Authentication (2FA)</label>
+                <Button
+                  variant={twoFAEnabled ? 'contained' : 'outlined'}
+                  color="secondary"
+                  onClick={e => { e.preventDefault(); setTwoFAEnabled(v => !v); }}
+                  sx={{ ml: 1 }}
+                >
+                  {twoFAEnabled ? 'Enabled' : 'Enable'}
+                </Button>
+                <Typography sx={{ color: isDark ? '#a1a1aa' : '#6b7280', fontSize: 12, mt: 1 }}>
+                  (Mock toggle. For real 2FA, integrate with Firebase Auth multi-factor.)
+                </Typography>
+              </Box>
+              <Button type="submit" variant="contained" color="primary">Save Settings</Button>
+            </form>
+            {/* Account Deletion */}
+            <Box sx={{ mt: 4, borderTop: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, pt: 3 }}>
+              <Typography variant="h6" sx={{ color: isDark ? '#f87171' : '#b91c1c', mb: 1 }}>Danger Zone</Typography>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to delete your account? This cannot be undone.')) {
+                    alert('Account deletion feature coming soon!');
+                  }
+                }}
+              >
+                Delete Account
+              </Button>
+            </Box>
+          </Box>
+        )}
       </Box>
     </Box>
   );

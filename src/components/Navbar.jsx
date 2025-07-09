@@ -55,7 +55,7 @@ const Navbar = ({ isDark, toggleDark }) => {
             <div className="hidden md:flex items-center space-x-1">
               <NavLink to="/" onClick={(e) => handleProtectedClick(e)}>Home</NavLink>
               <NavLink to="/jobs" onClick={(e) => handleProtectedClick(e)}>Find Jobs</NavLink>
-              <NavLink to="/mentors" onClick={(e) => handleProtectedClick(e)}>Mentors</NavLink>
+              <NavLink to="/about" onClick={(e) => handleProtectedClick(e)}>About</NavLink>
               <NavLink to="/resume" onClick={(e) => handleProtectedClick(e)}>Resume Builder</NavLink>
               <NavLink to="/articles" onClick={(e) => handleProtectedClick(e)}>Career Tips</NavLink>
               {(role === "Employer" || role === "Admin") && (

@@ -24,7 +24,7 @@ function AppRoutes({ isDark, toggleDark }) {
       <Navbar isDark={isDark} toggleDark={toggleDark} />
       <div style={{ padding: '1rem' }}>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Home isDark={isDark} />} />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/mentors" element={<Mentors />} />
           <Route path="/resume" element={<Resume />} />

@@ -1,5 +1,16 @@
 import React from "react";
+import FeedbackForm from '../components/FeedbackForm';
+import { useContext } from 'react';
 
-const Home = () => <h1>Welcome to NextTalent</h1>;
+function Home({ isDark }) {
+  return (
+    <>
+      <h1>Welcome to NextTalent</h1>
+      <div className="mt-12">
+        <FeedbackForm isDark={isDark} />
+      </div>
+    </>
+  );
+}
 
 export default Home; 
