@@ -14,12 +14,18 @@ const SignUp = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
     setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(
@@ -82,20 +88,18 @@ const SignUp = () => {
     </label>
     <div className="relative">
       <input
-        type="password"
+        type={showPassword ? "text" : "password"}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
+        name="password"
         className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 pr-12"
         placeholder="••••••••"
       />
       <button
         type="button"
         className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        onClick={() => {
-          const input = document.querySelector('input[name="password"]');
-          input.type = input.type === 'password' ? 'text' : 'password';
-        }}
+        onClick={() => setShowPassword((prev) => !prev)}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -127,20 +131,18 @@ const SignUp = () => {
     </label>
     <div className="relative">
       <input
-        type="password"
+        type={showConfirmPassword ? "text" : "password"}
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
         required
+        name="confirmPassword"
         className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 pr-12"
         placeholder="••••••••"
       />
       <button
         type="button"
         className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        onClick={() => {
-          const input = document.querySelector('input[name="confirmPassword"]');
-          input.type = input.type === 'password' ? 'text' : 'password';
-        }}
+        onClick={() => setShowConfirmPassword((prev) => !prev)}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
