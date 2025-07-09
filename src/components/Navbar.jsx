@@ -1,53 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { auth } from "../firebase";
 import { signOut } from "firebase/auth";
 
-const Navbar = () => {
-  const { user, role, firstName, lastName, photoURL, loading } = useAuth();
-  const [isDark, setIsDark] = useState(false);
+const Navbar = ({ isDark, toggleDark }) => {
+  const { user, role, firstName, photoURL, loading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   // Function to handle protected route clicks
-  const handleProtectedClick = (e, path) => {
+  const handleProtectedClick = (e) => {
     if (!user) {
       e.preventDefault();
       navigate('/login', { state: { from: location } });
-    }
-  };
-
-  // Initialize dark mode from localStorage or system preference
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    
-    if (savedTheme === "dark" || (!savedTheme && systemPrefersDark)) {
-      enableDarkMode();
-    } else {
-      disableDarkMode();
-    }
-  }, []);
-
-  const enableDarkMode = () => {
-    document.documentElement.classList.add("dark");
-    localStorage.setItem("theme", "dark");
-    setIsDark(true);
-  };
-
-  const disableDarkMode = () => {
-    document.documentElement.classList.remove("dark");
-    localStorage.setItem("theme", "light");
-    setIsDark(false);
-  };
-
-  const toggleDarkMode = () => {
-    if (isDark) {
-      disableDarkMode();
-    } else {
-      enableDarkMode();
     }
   };
 
@@ -86,22 +53,22 @@ const Navbar = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
-              <NavLink to="/" onClick={(e) => handleProtectedClick(e, "/")}>Home</NavLink>
-              <NavLink to="/jobs" onClick={(e) => handleProtectedClick(e, "/jobs")}>Find Jobs</NavLink>
-              <NavLink to="/mentors" onClick={(e) => handleProtectedClick(e, "/mentors")}>Mentors</NavLink>
-              <NavLink to="/resume" onClick={(e) => handleProtectedClick(e, "/resume")}>Resume Builder</NavLink>
-              <NavLink to="/articles" onClick={(e) => handleProtectedClick(e, "/articles")}>Career Tips</NavLink>
+              <NavLink to="/" onClick={(e) => handleProtectedClick(e)}>Home</NavLink>
+              <NavLink to="/jobs" onClick={(e) => handleProtectedClick(e)}>Find Jobs</NavLink>
+              <NavLink to="/mentors" onClick={(e) => handleProtectedClick(e)}>Mentors</NavLink>
+              <NavLink to="/resume" onClick={(e) => handleProtectedClick(e)}>Resume Builder</NavLink>
+              <NavLink to="/articles" onClick={(e) => handleProtectedClick(e)}>Career Tips</NavLink>
               {(role === "Employer" || role === "Admin") && (
-                <NavLink to="/post-job" special onClick={(e) => handleProtectedClick(e, "/post-job")}>Start Hiring</NavLink>
+                <NavLink to="/post-job" special onClick={(e) => handleProtectedClick(e)}>Start Hiring</NavLink>
               )}
               {role === "Admin" && (
-                <NavLink to="/admin" onClick={(e) => handleProtectedClick(e, "/admin")}>Admin Panel</NavLink>
+                <NavLink to="/admin" onClick={(e) => handleProtectedClick(e)}>Admin Panel</NavLink>
               )}
             </div>
 
             {/* Auth Section */}
             <div className="hidden md:flex items-center space-x-4">
-              <ThemeToggle isDark={isDark} toggleDark={toggleDarkMode} />
+              <ThemeToggle isDark={isDark} toggleDark={toggleDark} />
               
               {!loading && (
                 <>
@@ -159,7 +126,7 @@ const Navbar = () => {
 
             {/* Mobile menu button */}
             <div className="md:hidden flex items-center">
-              <ThemeToggle isDark={isDark} toggleDark={toggleDarkMode} />
+              <ThemeToggle isDark={isDark} toggleDark={toggleDark} />
               <button 
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="ml-4 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 p-2 rounded-lg focus:outline-none"
