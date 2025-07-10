@@ -27,10 +27,10 @@ function AppRoutes({ isDark, toggleDark }) {
       <div style={{ padding: '1rem' }}>
         <Routes>
           <Route path="/" element={<Home isDark={isDark} />} />
-          <Route path="/jobs" element={<Jobs />} />
+          <Route path="/jobs" element={<Jobs isDark={isDark} />} />
           <Route path="/mentors" element={<Mentors />} />
-          <Route path="/resume" element={<Resume />} />
-          <Route path="/articles" element={<Articles />} />
+          <Route path="/resume" element={<Resume isDark={isDark} />} />
+          <Route path="/articles" element={<Articles isDark={isDark} />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/admin" element={<AdminDashboard isDark={isDark} toggleDark={toggleDark} />} />
           <Route path="/post-job" element={<PostJob />} />
