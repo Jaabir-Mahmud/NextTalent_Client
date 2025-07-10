@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Jobs from './pages/Jobs';
@@ -10,10 +10,11 @@ import Dashboard from './pages/Dashboard';
 import SignUp from './pages/SignUp';
 import Login from './pages/Login';
 import PostJob from './pages/PostJob';
-import AdminDashboard from './pages/AdminDashboard';
+import { AdminDashboard } from './pages/Admin';
 import About from './pages/About';
 import Exams from './pages/Exams';
 import Interviews from './pages/Interviews';
+import Applications from './pages/Applications';
 import CompanyProfile from './pages/CompanyProfile';
 import UserProfile from './pages/UserProfile';
 import { AuthProvider, useAuth } from './AuthContext';
@@ -24,11 +25,14 @@ import Footer from './components/Footer';
 
 function AppRoutes({ isDark, toggleDark }) {
   const { loading } = useAuth();
+  const location = useLocation();
+  const isAdminRoute = location.pathname === '/admin';
+  
   if (loading) return <div className="min-h-screen flex items-center justify-center text-xl font-bold">Loading...</div>;
   return (
     <>
-      <Navbar isDark={isDark} toggleDark={toggleDark} />
-      <div style={{ padding: '1rem' }}>
+      {!isAdminRoute && <Navbar isDark={isDark} toggleDark={toggleDark} />}
+      <div style={{ padding: isAdminRoute ? '0' : '1rem' }}>
         <Routes>
           <Route path="/" element={<Home isDark={isDark} />} />
           <Route path="/jobs" element={<Jobs isDark={isDark} />} />
@@ -43,11 +47,12 @@ function AppRoutes({ isDark, toggleDark }) {
           <Route path="/about" element={<About isDark={isDark} />} />
           <Route path="/exams" element={<Exams isDark={isDark} />} />
           <Route path="/interviews" element={<Interviews isDark={isDark} />} />
+          <Route path="/applications" element={<Applications isDark={isDark} />} />
           <Route path="/company-profile" element={<CompanyProfile isDark={isDark} />} />
           <Route path="/user-profile" element={<UserProfile isDark={isDark} />} />
         </Routes>
       </div>
-      <Footer isDark={isDark} />
+      {!isAdminRoute && <Footer isDark={isDark} />}
     </>
   );
 }

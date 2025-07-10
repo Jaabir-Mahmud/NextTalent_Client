@@ -9,6 +9,8 @@ const UserProfile = ({ isDark }) => {
   const { user, role, firstName, lastName, photoURL } = useAuth();
   const [savedJobs, setSavedJobs] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [exams, setExams] = useState([]);
+  const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
@@ -24,6 +26,8 @@ const UserProfile = ({ isDark }) => {
     if (user) {
       fetchSavedJobs();
       fetchApplications();
+      fetchExams();
+      fetchInterviews();
       fetchUserDetails();
     }
   }, [user]);
@@ -88,6 +92,26 @@ const UserProfile = ({ isDark }) => {
       console.error("Error fetching applications:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchExams = async () => {
+    try {
+      const examsSnap = await getDocs(query(collection(db, 'exams'), where('userId', '==', user.uid)));
+      const examsData = examsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setExams(examsData);
+    } catch (error) {
+      console.error("Error fetching exams:", error);
+    }
+  };
+
+  const fetchInterviews = async () => {
+    try {
+      const interviewsSnap = await getDocs(query(collection(db, 'interviews'), where('userId', '==', user.uid)));
+      const interviewsData = interviewsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setInterviews(interviewsData);
+    } catch (error) {
+      console.error("Error fetching interviews:", error);
     }
   };
 
@@ -250,6 +274,26 @@ const UserProfile = ({ isDark }) => {
               }`}
             >
               Applications ({applications.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('exams')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'exams'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              Exams ({exams.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('interviews')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'interviews'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              Interviews ({interviews.length})
             </button>
           </div>
         </div>
@@ -589,10 +633,130 @@ const UserProfile = ({ isDark }) => {
                             application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                             application.status === 'approved' ? 'bg-green-100 text-green-800' :
                             application.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            application.status === 'interview_scheduled' ? 'bg-blue-100 text-blue-800' :
+                            application.status === 'exam_assigned' ? 'bg-purple-100 text-purple-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
-                            {application.status?.charAt(0).toUpperCase() + application.status?.slice(1) || 'Pending'}
+                            {application.status?.replace('_', ' ')?.charAt(0).toUpperCase() + application.status?.replace('_', ' ')?.slice(1) || 'Pending'}
                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'exams' && (
+            <div className="p-6">
+              <h3 className="text-xl font-semibold mb-4">Assigned Exams</h3>
+              {exams.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className={`text-lg mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    No exams assigned yet
+                  </div>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Employers will assign exams for your applications here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {exams.map((exam) => (
+                    <div
+                      key={exam.id}
+                      className={`p-4 rounded-lg border ${
+                        isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-lg mb-1">{exam.examTitle}</h4>
+                          <p className={`mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                            For: {exam.jobTitle} at {exam.companyName}
+                          </p>
+                          <p className={`text-sm mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Duration: {exam.duration} minutes • Due: {exam.dueDate ? new Date(exam.dueDate).toLocaleDateString() : 'N/A'}
+                          </p>
+                          <p className={`text-sm mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {exam.examDescription}
+                          </p>
+                          <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                            exam.status === 'assigned' ? 'bg-yellow-100 text-yellow-800' :
+                            exam.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            exam.status === 'expired' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {exam.status?.charAt(0).toUpperCase() + exam.status?.slice(1) || 'Assigned'}
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm">
+                            Take Exam
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'interviews' && (
+            <div className="p-6">
+              <h3 className="text-xl font-semibold mb-4">Scheduled Interviews</h3>
+              {interviews.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className={`text-lg mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    No interviews scheduled yet
+                  </div>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Employers will schedule interviews for your applications here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {interviews.map((interview) => (
+                    <div
+                      key={interview.id}
+                      className={`p-4 rounded-lg border ${
+                        isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-lg mb-1">{interview.jobTitle}</h4>
+                          <p className={`mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                            {interview.companyName}
+                          </p>
+                          <p className={`text-sm mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            📅 {interview.scheduledDate} at {interview.scheduledTime} • ⏱️ {interview.duration} minutes
+                          </p>
+                          <p className={`text-sm mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            📍 {interview.type} • {interview.location}
+                          </p>
+                          {interview.notes && (
+                            <p className={`text-sm mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'} bg-gray-100 dark:bg-gray-600 p-2 rounded`}>
+                              <strong>Notes:</strong> {interview.notes}
+                            </p>
+                          )}
+                          <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                            interview.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                            interview.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            interview.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {interview.status?.charAt(0).toUpperCase() + interview.status?.slice(1) || 'Scheduled'}
+                          </div>
+                        </div>
+                        <div className="ml-4 flex flex-col gap-2">
+                          <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
+                            Join Interview
+                          </button>
+                          <button className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                            Reschedule
+                          </button>
                         </div>
                       </div>
                     </div>

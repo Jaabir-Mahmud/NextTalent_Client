@@ -22,6 +22,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
       allow read: if isAdmin(); // Admins can read all users' data
+      allow update: if isAdmin(); // Admins can update user data (for deactivation)
     }
 
     // Resumes collection - allow authenticated user to read/write their own resume
@@ -42,6 +43,39 @@ service cloud.firestore {
       allow write: if isJobSeeker() || isAdmin();
     }
 
+    // Interviews collection - allow employers to create, users to read their own
+    match /interviews/{interviewId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.employerId);
+      allow create: if isEmployer() || isAdmin();
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.employerId);
+    }
+
+    // Exams collection - allow employers to create, users to read their own
+    match /exams/{examId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.employerId);
+      allow create: if isEmployer() || isAdmin();
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.employerId);
+    }
+
+    // Messages collection - allow users to read/write messages they're involved in, and admins to read all
+    match /messages/{messageId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == resource.data.fromUserId ||
+        request.auth.uid == resource.data.toUserId
+      ) || isAdmin();
+      allow create: if isAuthenticated() && (
+        request.auth.uid == request.resource.data.fromUserId || isAdmin()
+      );
+      allow list: if isAuthenticated() || isAdmin();
+    }
+
+    // Notifications collection - allow users to read/update their own notifications, admins to create
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow create: if isAdmin();
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
     // SavedJobs collection - allow authenticated users to read/write their own saved jobs
     match /savedJobs/{savedJobId} {
       allow read, write: if isAuthenticated() && request.auth.uid == resource.data.userId;
@@ -54,10 +88,20 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // AdminSettings collection - only admins can access
+    match /adminSettings/{doc} {
+      allow read, write: if isAdmin();
+    }
+
     // Feedback collection - allow write for authenticated users only
     match /feedback/{feedbackId} {
       allow read: if isAdmin(); // Only Admin can read feedback
       allow write: if isAuthenticated(); // Only authenticated users can write feedback
+      
+      // Replies subcollection - only admins can read/write replies
+      match /replies/{replyId} {
+        allow read, write: if isAdmin();
+      }
     }
 
     // Catch-all rule - only Admins can read/write to other collections

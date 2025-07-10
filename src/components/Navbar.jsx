@@ -3,6 +3,8 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { auth } from "../firebase";
 import { signOut } from "firebase/auth";
+import Notifications from "./Notifications";
+import Messages from "./Messages";
 
 const Navbar = ({ isDark, toggleDark }) => {
   const { user, role, firstName, photoURL, loading } = useAuth();
@@ -116,6 +118,8 @@ const Navbar = ({ isDark, toggleDark }) => {
                   ) : (
                     <>
                       <ThemeToggle isDark={isDark} toggleDark={toggleDark} />
+                      <Notifications isDark={isDark} />
+                      <Messages isDark={isDark} />
                       <div className="flex items-center space-x-3">
                         {/* User Info */}
                         <div className="text-right">

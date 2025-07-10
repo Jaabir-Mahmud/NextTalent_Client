@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./firebase";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 
@@ -15,6 +15,19 @@ export const AuthProvider = ({ children }) => {
   const [photoURL, setPhotoURL] = useState(null);
   const [loading, setLoading] = useState(true);
   const db = getFirestore();
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      setRole(null);
+      setFirstName(null);
+      setLastName(null);
+      setPhotoURL(null);
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -49,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   }, [db]);
 
   return (
-    <AuthContext.Provider value={{ user, role, firstName, lastName, photoURL, loading }}>
+    <AuthContext.Provider value={{ user, role, firstName, lastName, photoURL, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );
