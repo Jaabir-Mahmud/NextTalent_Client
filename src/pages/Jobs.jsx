@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getFirestore, collection, query, where, getDocs, orderBy, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { getFirestore, collection, query, where, getDocs, orderBy, addDoc, serverTimestamp, doc, getDoc, deleteDoc } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
 import Swal from 'sweetalert2';
 
@@ -15,6 +15,7 @@ const Jobs = ({ isDark }) => {
   const [filterExperience, setFilterExperience] = useState("");
   const [savedJobs, setSavedJobs] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [savedJobDocs, setSavedJobDocs] = useState({}); // Store document IDs for deletion
 
   useEffect(() => {
     fetchJobs();
@@ -47,7 +48,15 @@ const Jobs = ({ isDark }) => {
   const fetchSavedJobs = async () => {
     try {
       const savedSnap = await getDocs(query(collection(db, 'savedJobs'), where('userId', '==', user.uid)));
-      setSavedJobs(savedSnap.docs.map(doc => doc.data().jobId));
+      const savedJobIds = [];
+      const savedDocs = {};
+      savedSnap.docs.forEach(doc => {
+        const data = doc.data();
+        savedJobIds.push(data.jobId);
+        savedDocs[data.jobId] = doc.id; // Store document ID for deletion
+      });
+      setSavedJobs(savedJobIds);
+      setSavedJobDocs(savedDocs);
     } catch (error) {
       console.error("Error fetching saved jobs:", error);
     }
@@ -76,22 +85,31 @@ const Jobs = ({ isDark }) => {
     try {
       if (savedJobs.includes(jobId)) {
         // Remove from saved jobs
-        // TODO: Implement remove from saved jobs
-        setSavedJobs(prev => prev.filter(id => id !== jobId));
-        Swal.fire({
-          icon: 'success',
-          title: 'Job Removed',
-          text: 'Job removed from saved jobs',
-          confirmButtonColor: '#a78bfa',
-        });
+        const docId = savedJobDocs[jobId];
+        if (docId) {
+          await deleteDoc(doc(db, 'savedJobs', docId));
+          setSavedJobs(prev => prev.filter(id => id !== jobId));
+          setSavedJobDocs(prev => {
+            const newDocs = { ...prev };
+            delete newDocs[jobId];
+            return newDocs;
+          });
+          Swal.fire({
+            icon: 'success',
+            title: 'Job Removed',
+            text: 'Job removed from saved jobs',
+            confirmButtonColor: '#a78bfa',
+          });
+        }
       } else {
         // Add to saved jobs
-        await addDoc(collection(db, 'savedJobs'), {
+        const docRef = await addDoc(collection(db, 'savedJobs'), {
           userId: user.uid,
           jobId: jobId,
           savedAt: serverTimestamp()
         });
         setSavedJobs(prev => [...prev, jobId]);
+        setSavedJobDocs(prev => ({ ...prev, [jobId]: docRef.id }));
         Swal.fire({
           icon: 'success',
           title: 'Job Saved',

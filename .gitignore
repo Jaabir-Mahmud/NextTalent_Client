@@ -20,5 +20,3 @@ yarn-error.log*
 # editor/IDE
 .vscode/
 .idea/
-
-.env.js

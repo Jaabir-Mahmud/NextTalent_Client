@@ -15,6 +15,7 @@ import About from './pages/About';
 import Exams from './pages/Exams';
 import Interviews from './pages/Interviews';
 import CompanyProfile from './pages/CompanyProfile';
+import UserProfile from './pages/UserProfile';
 import { AuthProvider, useAuth } from './AuthContext';
 import './App.css';
 import { getTheme } from './theme';
@@ -43,6 +44,7 @@ function AppRoutes({ isDark, toggleDark }) {
           <Route path="/exams" element={<Exams isDark={isDark} />} />
           <Route path="/interviews" element={<Interviews isDark={isDark} />} />
           <Route path="/company-profile" element={<CompanyProfile isDark={isDark} />} />
+          <Route path="/user-profile" element={<UserProfile isDark={isDark} />} />
         </Routes>
       </div>
       <Footer isDark={isDark} />

@@ -17,6 +17,7 @@ const Footer = ({ isDark }) => (
             <li><a href="/download" className="hover:text-indigo-500">Download</a></li>
             <li><a href="/jobs" className="hover:text-indigo-500">Talents</a></li>
             <li><a href="/about" className="hover:text-indigo-500">About</a></li>
+            <li><a href="/articles" className="hover:text-indigo-500">Career Tips</a></li>
             <li><a href="/pricing" className="hover:text-indigo-500">Pricing</a></li>
             <li><a href="/contact" className="hover:text-indigo-500">Contact</a></li>
           </ul>
