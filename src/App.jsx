@@ -12,6 +12,9 @@ import Login from './pages/Login';
 import PostJob from './pages/PostJob';
 import AdminDashboard from './pages/AdminDashboard';
 import About from './pages/About';
+import Exams from './pages/Exams';
+import Interviews from './pages/Interviews';
+import CompanyProfile from './pages/CompanyProfile';
 import { AuthProvider, useAuth } from './AuthContext';
 import './App.css';
 import { getTheme } from './theme';
@@ -31,12 +34,15 @@ function AppRoutes({ isDark, toggleDark }) {
           <Route path="/mentors" element={<Mentors />} />
           <Route path="/resume" element={<Resume isDark={isDark} />} />
           <Route path="/articles" element={<Articles isDark={isDark} />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard isDark={isDark} />} />
           <Route path="/admin" element={<AdminDashboard isDark={isDark} toggleDark={toggleDark} />} />
           <Route path="/post-job" element={<PostJob />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           <Route path="/about" element={<About isDark={isDark} />} />
+          <Route path="/exams" element={<Exams isDark={isDark} />} />
+          <Route path="/interviews" element={<Interviews isDark={isDark} />} />
+          <Route path="/company-profile" element={<CompanyProfile isDark={isDark} />} />
         </Routes>
       </div>
       <Footer isDark={isDark} />

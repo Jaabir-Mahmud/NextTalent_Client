@@ -58,8 +58,15 @@ const Navbar = ({ isDark, toggleDark }) => {
               <NavLink to="/about" onClick={(e) => handleProtectedClick(e)}>About</NavLink>
               <NavLink to="/resume" onClick={(e) => handleProtectedClick(e)}>Resume Builder</NavLink>
               <NavLink to="/articles" onClick={(e) => handleProtectedClick(e)}>Career Tips</NavLink>
+              {user && (
+                <>
+                  <NavLink to="/dashboard" onClick={(e) => handleProtectedClick(e)}>Dashboard</NavLink>
+                  <NavLink to="/exams" onClick={(e) => handleProtectedClick(e)}>Exams</NavLink>
+                  <NavLink to="/interviews" onClick={(e) => handleProtectedClick(e)}>Interviews</NavLink>
+                </>
+              )}
               {(role === "Employer" || role === "Admin") && (
-                <NavLink to="/post-job" special onClick={(e) => handleProtectedClick(e)}>Start Hiring</NavLink>
+                <NavLink to="/post-job" special onClick={(e) => handleProtectedClick(e)}>Post Job</NavLink>
               )}
               {role === "Admin" && (
                 <NavLink to="/admin" onClick={(e) => handleProtectedClick(e)}>Admin Panel</NavLink>
@@ -151,11 +158,24 @@ const Navbar = ({ isDark, toggleDark }) => {
           <div className="md:hidden bg-white dark:bg-gray-800 shadow-xl rounded-lg mx-4 mt-2 py-2 transition-all duration-300">
             <MobileNavLink to="/" onClick={() => setMobileMenuOpen(false)}>Home</MobileNavLink>
             <MobileNavLink to="/jobs" onClick={() => setMobileMenuOpen(false)}>Find Jobs</MobileNavLink>
-            <MobileNavLink to="/mentors" onClick={() => setMobileMenuOpen(false)}>Mentors</MobileNavLink>
+            <MobileNavLink to="/about" onClick={() => setMobileMenuOpen(false)}>About</MobileNavLink>
             <MobileNavLink to="/resume" onClick={() => setMobileMenuOpen(false)}>Resume Builder</MobileNavLink>
             <MobileNavLink to="/articles" onClick={() => setMobileMenuOpen(false)}>Career Tips</MobileNavLink>
+            
+            {user && (
+              <>
+                <MobileNavLink to="/dashboard" onClick={() => setMobileMenuOpen(false)}>Dashboard</MobileNavLink>
+                <MobileNavLink to="/exams" onClick={() => setMobileMenuOpen(false)}>Exams</MobileNavLink>
+                <MobileNavLink to="/interviews" onClick={() => setMobileMenuOpen(false)}>Interviews</MobileNavLink>
+              </>
+            )}
+            
             {(role === "Employer" || role === "Admin") && (
-              <MobileNavLink to="/dashboard" special onClick={() => setMobileMenuOpen(false)}>Start Hiring</MobileNavLink>
+              <MobileNavLink to="/post-job" special onClick={() => setMobileMenuOpen(false)}>Post Job</MobileNavLink>
+            )}
+            
+            {role === "Admin" && (
+              <MobileNavLink to="/admin" onClick={() => setMobileMenuOpen(false)}>Admin Panel</MobileNavLink>
             )}
 
             <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2 px-4">
@@ -206,7 +226,7 @@ const Navbar = ({ isDark, toggleDark }) => {
                       handleLogout();
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full text-center px-4 py-2 rounded-lg font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
+                    className="mx-4 px-4 py-2 rounded-lg font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
                   >
                     Logout
                   </button>
@@ -220,57 +240,62 @@ const Navbar = ({ isDark, toggleDark }) => {
   );
 };
 
-// Custom NavLink component for desktop
-const NavLink = ({ to, children, special }) => {
-  return (
-    <Link
-      to={to}
-      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative group
-        ${special 
-          ? "text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg hover:shadow-emerald-500/30"
-          : "text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-        }`}
-    >
-      {children}
-      {!special && (
-        <span className="absolute bottom-1 left-1/2 w-0 h-0.5 bg-purple-600 dark:bg-purple-400 group-hover:w-4/5 group-hover:left-1/10 transition-all duration-300"></span>
-      )}
-    </Link>
-  );
-};
-
-// Custom NavLink component for mobile
-const MobileNavLink = ({ to, children, special, onClick }) => {
+const NavLink = ({ to, children, special, onClick }) => {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+  
   return (
     <Link
       to={to}
       onClick={onClick}
-      className={`block px-4 py-3 text-sm font-medium transition-colors duration-200
-        ${special 
-          ? "text-white bg-gradient-to-r from-emerald-600 to-teal-600"
-          : "text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-        }`}
+      className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
+        special
+          ? "bg-gradient-to-r from-purple-600 to-blue-500 text-white hover:from-purple-500 hover:to-blue-400 shadow-lg hover:shadow-purple-500/30"
+          : isActive
+          ? "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20"
+          : "text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+      }`}
     >
       {children}
     </Link>
   );
 };
 
-// Theme Toggle Component
+const MobileNavLink = ({ to, children, special, onClick }) => {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+  
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      className={`block px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+        special
+          ? "bg-gradient-to-r from-purple-600 to-blue-500 text-white"
+          : isActive
+          ? "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20"
+          : "text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+      }`}
+    >
+      {children}
+    </Link>
+  );
+};
+
 const ThemeToggle = ({ isDark, toggleDark }) => {
   return (
     <button
       onClick={toggleDark}
-      className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-yellow-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 focus:outline-none"
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
+      aria-label="Toggle theme"
     >
       {isDark ? (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 5.66l-.71-.71M4.05 4.05l-.71-.71M12 7a5 5 0 100 10 5 5 0 000-10z" />
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
       ) : (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
         </svg>
       )}
     </button>
