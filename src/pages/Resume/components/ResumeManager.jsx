@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import TemplatesModal from './TemplatesModal';
 import PDFEditModal from './PDFEditModal';
+import { useAuth } from '../../../AuthContext';
 
 const ResumeManager = ({ onLoadResume, isDark }) => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState(null);
   const [messageType, setMessageType] = useState('success');
@@ -15,6 +17,17 @@ const ResumeManager = ({ onLoadResume, isDark }) => {
       return [];
     }
   });
+
+  // Clear uploaded files when user changes
+  useEffect(() => {
+    setUploadedFiles([]);
+    try {
+      localStorage.removeItem('uploadedResumeFiles');
+      localStorage.removeItem('resumeTemplates');
+    } catch (error) {
+      console.error('Error clearing resume data:', error);
+    }
+  }, [user?.uid]);
   const [showTemplates, setShowTemplates] = useState(false);
   const [editPdf, setEditPdf] = useState(null);
   const [resumeName, setResumeName] = useState('');

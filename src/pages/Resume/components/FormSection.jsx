@@ -16,11 +16,22 @@ const FormSection = ({
   onAISuggestion
 }) => {
   const currentSection = sections.find(s => s.id === section);
+  
+  // Debug logs
+  console.log('FormSection props:', { section, resumeData, currentSection });
+  
+  if (!section) {
+    return (
+      <div className={`rounded-xl p-3 sm:p-4 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
+        <p className="text-gray-500">No section selected</p>
+      </div>
+    );
+  }
 
   return (
     <div className={`rounded-xl p-3 sm:p-4 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
       <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base flex items-center gap-2">
-        {sections.find(s => s.id === section)?.icon} {sections.find(s => s.id === section)?.name}
+        {sections.find(s => s.id === section)?.icon} {sections.find(s => s.id === section)?.label}
       </h3>
       
       {section === 'personal' ? (
@@ -33,7 +44,7 @@ const FormSection = ({
       ) : (
         <ArraySection
           section={section}
-          data={resumeData[section]}
+          data={resumeData[section] || []}
           addItem={addArrayItem}
           removeItem={removeArrayItem}
           updateItem={updateArrayItem}

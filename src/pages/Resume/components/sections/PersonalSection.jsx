@@ -1,6 +1,8 @@
 import React from 'react';
 
-const PersonalSection = ({ data, updateSection, isDark }) => {
+const PersonalSection = ({ data = {}, updateSection, isDark }) => {
+  console.log('PersonalSection data:', data);
+  
   return (
     <div className="space-y-3 sm:space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">

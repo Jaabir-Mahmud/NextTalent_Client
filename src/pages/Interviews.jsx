@@ -3,8 +3,6 @@ import { getFirestore, collection, query, where, getDocs, addDoc, serverTimestam
 import { useAuth } from '../AuthContext';
 import Swal from 'sweetalert2';
 
-const db = getFirestore();
-
 const Interviews = ({ isDark }) => {
   const { user, role, firstName, lastName } = useAuth();
   const [interviews, setInterviews] = useState([]);
@@ -31,11 +29,22 @@ const Interviews = ({ isDark }) => {
 
   const fetchInterviews = async () => {
     try {
+      // Check if Firebase is properly initialized
+      const db = getFirestore();
+      if (!db) {
+        console.error('Firebase not initialized');
+        return;
+      }
+
       let interviewsQuery;
       if (role === 'Job Seeker') {
         interviewsQuery = query(collection(db, 'interviews'), where('applicantId', '==', user.uid));
       } else if (role === 'Employer') {
         interviewsQuery = query(collection(db, 'interviews'), where('employerId', '==', user.uid));
+      } else {
+        // If no valid role, don't fetch interviews
+        setLoading(false);
+        return;
       }
 
       const interviewsSnap = await getDocs(interviewsQuery);
@@ -53,6 +62,12 @@ const Interviews = ({ isDark }) => {
 
   const fetchApplications = async () => {
     try {
+      const db = getFirestore();
+      if (!db) {
+        console.error('Firebase not initialized');
+        return;
+      }
+
       const applicationsSnap = await getDocs(query(collection(db, 'applications'), where('employerId', '==', user.uid), where('status', '==', 'approved')));
       const applicationsData = applicationsSnap.docs.map(doc => ({
         id: doc.id,
@@ -68,6 +83,12 @@ const Interviews = ({ isDark }) => {
     e.preventDefault();
     
     try {
+      const db = getFirestore();
+      if (!db) {
+        console.error('Firebase not initialized');
+        return;
+      }
+
       const interviewData = {
         applicationId: selectedApplication.id,
         applicantId: selectedApplication.userId,
@@ -123,6 +144,12 @@ const Interviews = ({ isDark }) => {
 
   const handleInterviewAction = async (interviewId, action) => {
     try {
+      const db = getFirestore();
+      if (!db) {
+        console.error('Firebase not initialized');
+        return;
+      }
+
       const newStatus = action === 'accept' ? 'confirmed' : action === 'decline' ? 'declined' : 'completed';
       
       await updateDoc(doc(db, 'interviews', interviewId), {

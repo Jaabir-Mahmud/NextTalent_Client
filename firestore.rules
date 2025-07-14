@@ -37,24 +37,47 @@ service cloud.firestore {
       allow write: if isEmployer() || isAdmin();
     }
 
-    // Applications collection - Job Seekers or Admins can write, all authenticated users can read
+    // Applications collection - Job Seekers can create, Employers can update status, all authenticated users can read
     match /applications/{appId} {
       allow read: if isAuthenticated() || isAdmin();
-      allow write: if isJobSeeker() || isAdmin();
+      allow create: if isJobSeeker() || isAdmin();
+      allow update: if isJobSeeker() || isEmployer() || isAdmin(); // Allow employers to update application status
+      allow delete: if isAdmin(); // Only admins can delete applications
+      allow list: if isAuthenticated(); // Allow listing for queries
     }
 
     // Interviews collection - allow employers to create, users to read their own
     match /interviews/{interviewId} {
-      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.employerId);
+      allow read: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId || 
+        request.auth.uid == resource.data.employerId ||
+        isAdmin()
+      );
       allow create: if isEmployer() || isAdmin();
-      allow update: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.employerId);
+      allow update: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId || 
+        request.auth.uid == resource.data.employerId ||
+        isAdmin()
+      );
+      allow delete: if isEmployer() || isAdmin();
+      allow list: if isAuthenticated(); // Allow listing for queries
     }
 
     // Exams collection - allow employers to create, users to read their own
     match /exams/{examId} {
-      allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.employerId);
+      allow read: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId || 
+        request.auth.uid == resource.data.employerId ||
+        isAdmin()
+      );
       allow create: if isEmployer() || isAdmin();
-      allow update: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.employerId);
+      allow update: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId || 
+        request.auth.uid == resource.data.employerId ||
+        isAdmin()
+      );
+      allow delete: if isEmployer() || isAdmin();
+      allow list: if isAuthenticated(); // Allow listing for queries
     }
 
     // Messages collection - allow users to read/write messages they're involved in, and admins to read all
@@ -71,16 +94,24 @@ service cloud.firestore {
 
     // Notifications collection - allow users to read/update their own notifications, admins to create
     match /notifications/{notificationId} {
-      allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
-      allow create: if isAdmin();
-      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow read, update: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow create: if isAdmin() || (isAuthenticated() && request.auth.uid == request.resource.data.userId);
+      allow list: if isAuthenticated(); // Allow listing notifications for the user
     }
 
     // SavedJobs collection - allow authenticated users to read/write their own saved jobs
     match /savedJobs/{savedJobId} {
-      allow read, write: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      // Allow create with proper userId validation
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
-      allow read: if isAdmin(); // Admins can read all saved jobs
+      
+      // Allow read, update, delete for the owner or admin
+      allow read, update, delete: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId || 
+        isAdmin()
+      );
+      
+      // Allow listing saved jobs for the authenticated user
+      allow list: if isAuthenticated();
     }
 
     // Admin-only collection

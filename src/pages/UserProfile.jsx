@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 const db = getFirestore();
 
 const UserProfile = ({ isDark }) => {
-  const { user, role, firstName, lastName, photoURL } = useAuth();
+  const { user, role, firstName, lastName, photoURL, freshStart, validateAccountStatus } = useAuth();
   const [savedJobs, setSavedJobs] = useState([]);
   const [applications, setApplications] = useState([]);
   const [exams, setExams] = useState([]);
@@ -177,6 +177,131 @@ const UserProfile = ({ isDark }) => {
     }
   };
 
+  // Handler for fresh start (clear data but stay logged in)
+  const handleFreshStart = async () => {
+    const result = await Swal.fire({
+      title: 'Clear All Data?',
+      text: 'This will clear all cached data and refresh the application. You will remain logged in.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#f97316',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, clear data',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        // Clear localStorage data
+        localStorage.removeItem('resumeTemplates');
+        localStorage.removeItem('uploadedResumeFiles');
+        
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: 'Data Cleared',
+          text: 'All cached data has been cleared. The page will refresh.',
+          confirmButtonColor: '#a78bfa',
+          timer: 2000
+        });
+
+        // Refresh the page after a short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } catch (error) {
+        console.error('Error clearing data:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to clear some data. Try refreshing manually.',
+          confirmButtonColor: '#a78bfa',
+        });
+      }
+    }
+  };
+
+  // Handler for complete reset (logout and clear all data)
+  const handleCompleteReset = async () => {
+    const result = await Swal.fire({
+      title: 'Complete Reset?',
+      text: 'This will log you out and clear ALL data. Use this when switching accounts or if you are experiencing data conflicts.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, complete reset',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        Swal.fire({
+          icon: 'success',
+          title: 'Resetting...',
+          text: 'Logging out and clearing all data...',
+          confirmButtonColor: '#a78bfa',
+          timer: 1500,
+          showConfirmButton: false
+        });
+
+        // Perform complete reset
+        await freshStart();
+      } catch (error) {
+        console.error('Error performing complete reset:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to complete reset. Please try again.',
+          confirmButtonColor: '#a78bfa',
+        });
+      }
+    }
+  };
+
+  // Handler to check if account is still valid
+  const handleValidateAccount = async () => {
+    try {
+      Swal.fire({
+        title: 'Checking Account Status...',
+        text: 'Validating your account...',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const isValid = await validateAccountStatus();
+      
+      Swal.close();
+
+      if (isValid) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Account Valid',
+          text: 'Your account is active and valid.',
+          confirmButtonColor: '#a78bfa',
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Account Invalid',
+          text: 'Your account appears to have been deleted or disabled. You will be logged out.',
+          confirmButtonColor: '#a78bfa',
+        });
+      }
+    } catch (error) {
+      console.error('Error validating account:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Validation Failed',
+        text: 'Could not validate account status. Please try again.',
+        confirmButtonColor: '#a78bfa',
+      });
+    }
+  };
+
   const handleInputChange = (field, value) => {
     setEditForm(prev => ({
       ...prev,
@@ -294,6 +419,16 @@ const UserProfile = ({ isDark }) => {
               }`}
             >
               Interviews ({interviews.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'settings'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              Settings
             </button>
           </div>
         </div>
@@ -765,10 +900,73 @@ const UserProfile = ({ isDark }) => {
               )}
             </div>
           )}
+
+          {/* Settings Tab */}
+          {activeTab === 'settings' && (
+            <div className={`p-6 rounded-lg shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+              <h3 className="text-xl font-semibold mb-6">Account Settings</h3>
+              
+              <div className="space-y-6">
+                {/* Data Management Section */}
+                <div className={`p-4 border rounded-lg ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
+                  <h4 className="text-lg font-medium mb-3">Data Management</h4>
+                  <p className={`text-sm mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    If you're experiencing issues with cached data or want to start fresh, you can clear all local data.
+                  </p>
+                  
+                  <button
+                    onClick={handleFreshStart}
+                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+                  >
+                    🔄 Clear All Data & Restart
+                  </button>
+                  <p className={`text-xs mt-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    This will clear all cached data and refresh the application. You'll remain logged in.
+                  </p>
+                </div>
+
+                {/* Account Validation Section */}
+                <div className={`p-4 border rounded-lg ${isDark ? 'border-blue-600 bg-blue-900/20' : 'border-blue-200 bg-blue-50'}`}>
+                  <h4 className="text-lg font-medium mb-3 text-blue-600 dark:text-blue-400">Account Status</h4>
+                  <p className={`text-sm mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    Check if your account is still active. Use this if you're still logged in but think your account might have been deleted.
+                  </p>
+                  
+                  <button
+                    onClick={handleValidateAccount}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                  >
+                    🔍 Check Account Status
+                  </button>
+                  <p className={`text-xs mt-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    This will validate your account and automatically log you out if it has been deleted.
+                  </p>
+                </div>
+
+                {/* Account Actions Section */}
+                <div className={`p-4 border rounded-lg ${isDark ? 'border-red-600 bg-red-900/20' : 'border-red-200 bg-red-50'}`}>
+                  <h4 className="text-lg font-medium mb-3 text-red-600 dark:text-red-400">Danger Zone</h4>
+                  <p className={`text-sm mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    Need to completely reset your account? This will log you out and clear all data.
+                  </p>
+                  
+                  <button
+                    onClick={handleCompleteReset}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                  >
+                    ⚠️ Complete Reset
+                  </button>
+                  <p className={`text-xs mt-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    This will log you out and clear all cached data. Use this if you're switching accounts.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default UserProfile; 
+export default UserProfile;

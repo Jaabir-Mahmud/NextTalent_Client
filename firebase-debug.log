@@ -1,0 +1,60 @@
+[debug] [2025-07-13T13:17:09.061Z] ----------------------------------------------------------------------
+[debug] [2025-07-13T13:17:09.064Z] Command:       C:\nvm4w\nodejs\node.exe C:\nvm4w\nodejs\node_modules\firebase-tools\lib\bin\firebase.js deploy --only firestore:rules --debug
+[debug] [2025-07-13T13:17:09.064Z] CLI Version:   14.10.0
+[debug] [2025-07-13T13:17:09.064Z] Platform:      win32
+[debug] [2025-07-13T13:17:09.065Z] Node Version:  v20.19.3
+[debug] [2025-07-13T13:17:09.065Z] Time:          Sun Jul 13 2025 19:17:09 GMT+0600 (Bangladesh Standard Time)
+[debug] [2025-07-13T13:17:09.065Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-07-13T13:17:09.296Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-07-13T13:17:09.297Z] > authorizing via signed-in user (jabirbhaaii@gmail.com)
+[debug] [2025-07-13T13:17:09.298Z] [iam] checking project nexttalent-72519 for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2025-07-13T13:17:09.299Z] Checked if tokens are valid: true, expires at: 1752415352144
+[debug] [2025-07-13T13:17:09.299Z] Checked if tokens are valid: true, expires at: 1752415352144
+[debug] [2025-07-13T13:17:09.301Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/nexttalent-72519:testIamPermissions [none]
+[debug] [2025-07-13T13:17:09.301Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/nexttalent-72519:testIamPermissions x-goog-quota-user=projects/nexttalent-72519
+[debug] [2025-07-13T13:17:09.301Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/nexttalent-72519:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2025-07-13T13:17:10.657Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/nexttalent-72519:testIamPermissions 200
+[debug] [2025-07-13T13:17:10.659Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/nexttalent-72519:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'nexttalent-72519'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: reading indexes from firestore.indexes.json... 
+[info] i  cloud.firestore: checking firestore.rules for compilation errors... 
+[debug] [2025-07-13T13:17:10.668Z] Checked if tokens are valid: true, expires at: 1752415352144
+[debug] [2025-07-13T13:17:10.669Z] Checked if tokens are valid: true, expires at: 1752415352144
+[debug] [2025-07-13T13:17:10.670Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/nexttalent-72519:test [none]
+[debug] [2025-07-13T13:17:10.670Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/nexttalent-72519:test [omitted]
+[debug] [2025-07-13T13:17:12.201Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/nexttalent-72519:test 200
+[debug] [2025-07-13T13:17:12.201Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/nexttalent-72519:test {}
+[info] +  cloud.firestore: rules file firestore.rules compiled successfully 
+[debug] [2025-07-13T13:17:12.203Z] Checked if tokens are valid: true, expires at: 1752415352144
+[debug] [2025-07-13T13:17:12.204Z] Checked if tokens are valid: true, expires at: 1752415352144
+[debug] [2025-07-13T13:17:12.204Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/nexttalent-72519/databases/(default) [none]
+[debug] [2025-07-13T13:17:13.806Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/nexttalent-72519/databases/(default) 200
+[debug] [2025-07-13T13:17:13.807Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/nexttalent-72519/databases/(default) {"name":"projects/nexttalent-72519/databases/(default)","uid":"35a3c2da-f0d5-4622-923c-44e9b52c1a28","createTime":"2025-07-09T11:23:33.160206Z","updateTime":"2025-07-09T11:23:33.160206Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2025-07-13T12:17:14.752835Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"etag":"IJTI4OT1uY4DMJKz8YHVr44D"}
+[debug] [2025-07-13T13:17:13.808Z] Checked if tokens are valid: true, expires at: 1752415352144
+[debug] [2025-07-13T13:17:13.808Z] Checked if tokens are valid: true, expires at: 1752415352144
+[debug] [2025-07-13T13:17:13.809Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/nexttalent-72519/releases pageSize=10&pageToken=
+[debug] [2025-07-13T13:17:14.175Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/nexttalent-72519/releases 200
+[debug] [2025-07-13T13:17:14.175Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/nexttalent-72519/releases {"releases":[{"name":"projects/nexttalent-72519/releases/cloud.firestore","rulesetName":"projects/nexttalent-72519/rulesets/600be1d5-a7b9-4886-acae-519c7c6597fc","createTime":"2025-07-09T11:23:40.697057Z","updateTime":"2025-07-13T13:16:26.922899Z"}]}
+[debug] [2025-07-13T13:17:14.176Z] Checked if tokens are valid: true, expires at: 1752415352144
+[debug] [2025-07-13T13:17:14.176Z] Checked if tokens are valid: true, expires at: 1752415352144
+[debug] [2025-07-13T13:17:14.176Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/nexttalent-72519/rulesets/600be1d5-a7b9-4886-acae-519c7c6597fc [none]
+[debug] [2025-07-13T13:17:15.539Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/nexttalent-72519/rulesets/600be1d5-a7b9-4886-acae-519c7c6597fc 200
+[debug] [2025-07-13T13:17:15.539Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/nexttalent-72519/rulesets/600be1d5-a7b9-4886-acae-519c7c6597fc [omitted]
+[info] i  firestore: latest version of firestore.rules already up to date, skipping upload... 
+[debug] [2025-07-13T13:17:15.540Z] [rules] releasing cloud.firestore/(default) with ruleset projects/nexttalent-72519/rulesets/600be1d5-a7b9-4886-acae-519c7c6597fc
+[debug] [2025-07-13T13:17:15.540Z] Checked if tokens are valid: true, expires at: 1752415352144
+[debug] [2025-07-13T13:17:15.541Z] Checked if tokens are valid: true, expires at: 1752415352144
+[debug] [2025-07-13T13:17:15.541Z] >>> [apiv2][query] PATCH https://firebaserules.googleapis.com/v1/projects/nexttalent-72519/releases/cloud.firestore/(default) [none]
+[debug] [2025-07-13T13:17:15.541Z] >>> [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/nexttalent-72519/releases/cloud.firestore/(default) {"release":{"name":"projects/nexttalent-72519/releases/cloud.firestore/(default)","rulesetName":"projects/nexttalent-72519/rulesets/600be1d5-a7b9-4886-acae-519c7c6597fc"}}
+[debug] [2025-07-13T13:17:17.007Z] <<< [apiv2][status] PATCH https://firebaserules.googleapis.com/v1/projects/nexttalent-72519/releases/cloud.firestore/(default) 200
+[debug] [2025-07-13T13:17:17.007Z] <<< [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/nexttalent-72519/releases/cloud.firestore/(default) {"name":"projects/nexttalent-72519/releases/cloud.firestore","rulesetName":"projects/nexttalent-72519/rulesets/600be1d5-a7b9-4886-acae-519c7c6597fc","createTime":"2025-07-09T11:23:40.697057Z","updateTime":"2025-07-13T13:17:17.870376Z"}
+[debug] [2025-07-13T13:17:17.008Z] [rules] updated release projects/nexttalent-72519/releases/cloud.firestore
+[info] +  firestore: released rules firestore.rules to cloud.firestore 
+[info] 
+[info] +  Deploy complete! 
+[info] 
+[info] Project Console: https://console.firebase.google.com/project/nexttalent-72519/overview

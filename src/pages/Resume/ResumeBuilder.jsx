@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../../AuthContext';
@@ -25,13 +25,10 @@ const ResumeBuilder = ({ isDark }) => {
   const [resumeFontFamily, setResumeFontFamily] = useState('Arial');
   const [resumeFontSize, setResumeFontSize] = useState(16);
 
-  useEffect(() => {
-    if (user) {
-      loadResumeData();
-    }
-  }, [user]);
-
-  const loadResumeData = async () => {
+  // Memoized load resume data function
+  const loadResumeData = useCallback(async () => {
+    if (!user) return;
+    
     try {
       const docRef = doc(db, 'resumes', user.uid);
       const docSnap = await getDoc(docRef);
@@ -41,10 +38,12 @@ const ResumeBuilder = ({ isDark }) => {
     } catch (error) {
       console.error('Error loading resume:', error);
     }
-  };
+  }, [user]);
 
-  const saveResumeData = async () => {
+  // Memoized save resume data function
+  const saveResumeData = useCallback(async () => {
     if (!user) return;
+    
     setIsSaving(true);
     try {
       await setDoc(doc(db, 'resumes', user.uid), resumeData);
@@ -54,45 +53,29 @@ const ResumeBuilder = ({ isDark }) => {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [user, resumeData]);
 
+  // Load resume data on mount
+  useEffect(() => {
+    loadResumeData();
+  }, [loadResumeData]);
+
+  // Auto-save with debouncing
   useEffect(() => {
     const timeoutId = setTimeout(saveResumeData, 1000);
     return () => clearTimeout(timeoutId);
-  }, [resumeData]);
+  }, [resumeData, saveResumeData]);
 
-  const updateSection = (section, data) => {
+  // Memoized update section function
+  const updateSection = useCallback((section, data) => {
     setResumeData(prev => ({
       ...prev,
       [section]: data
     }));
-  };
+  }, []);
 
-  const addArrayItem = (section) => {
-    const newItem = getDefaultItem(section);
-    setResumeData(prev => ({
-      ...prev,
-      [section]: [...prev[section], newItem]
-    }));
-  };
-
-  const removeArrayItem = (section, index) => {
-    setResumeData(prev => ({
-      ...prev,
-      [section]: prev[section].filter((_, i) => i !== index)
-    }));
-  };
-
-  const updateArrayItem = (section, index, field, value) => {
-    setResumeData(prev => ({
-      ...prev,
-      [section]: prev[section].map((item, i) => 
-        i === index ? { ...item, [field]: value } : item
-      )
-    }));
-  };
-
-  const getDefaultItem = (section) => {
+  // Memoized get default item function
+  const getDefaultItem = useCallback((section) => {
     const defaults = {
       education: { institution: '', degree: '', field: '', startDate: '', endDate: '', gpa: '' },
       experience: { company: '', position: '', startDate: '', endDate: '', description: '', achievements: [] },
@@ -104,9 +87,37 @@ const ResumeBuilder = ({ isDark }) => {
       interests: { interest: '', description: '' }
     };
     return defaults[section] || {};
-  };
+  }, []);
 
-  const handleAISuggestion = (suggestion) => {
+  // Memoized add array item function
+  const addArrayItem = useCallback((section) => {
+    const newItem = getDefaultItem(section);
+    setResumeData(prev => ({
+      ...prev,
+      [section]: [...(prev[section] || []), newItem]
+    }));
+  }, [getDefaultItem]);
+
+  // Memoized remove array item function
+  const removeArrayItem = useCallback((section, index) => {
+    setResumeData(prev => ({
+      ...prev,
+      [section]: (prev[section] || []).filter((_, i) => i !== index)
+    }));
+  }, []);
+
+  // Memoized update array item function
+  const updateArrayItem = useCallback((section, index, field, value) => {
+    setResumeData(prev => ({
+      ...prev,
+      [section]: (prev[section] || []).map((item, i) => 
+        i === index ? { ...item, [field]: value } : item
+      )
+    }));
+  }, []);
+
+  // Memoized AI suggestion handler
+  const handleAISuggestion = useCallback((suggestion) => {
     // Always parse as comma-separated items and filter
     let items = [];
     if (activeSection === 'education') {
@@ -169,11 +180,42 @@ const ResumeBuilder = ({ isDark }) => {
         [activeSection]: [...prev[activeSection], ...newEntries]
       }));
     }
-  };
+  }, [activeSection, resumeData, updateSection]);
 
-  const handleLoadResume = (data) => {
+  // Memoized load resume handler
+  const handleLoadResume = useCallback((data) => {
     setResumeData(data);
-  };
+  }, []);
+
+  // Memoized section change handler
+  const handleSectionChange = useCallback((section) => {
+    setActiveSection(section);
+  }, []);
+
+  // Memoized template change handler
+  const handleTemplateChange = useCallback((template) => {
+    setSelectedTemplate(template);
+  }, []);
+
+  // Memoized font family change handler
+  const handleFontFamilyChange = useCallback((fontFamily) => {
+    setResumeFontFamily(fontFamily);
+  }, []);
+
+  // Memoized font size change handler
+  const handleFontSizeChange = useCallback((fontSize) => {
+    setResumeFontSize(fontSize);
+  }, []);
+
+  // Memoized resume builder props
+  const resumeBuilderProps = useMemo(() => ({
+    section: activeSection,
+    resumeData,
+    updateSection,
+    addArrayItem,
+    removeArrayItem,
+    updateArrayItem
+  }), [activeSection, resumeData, updateSection, addArrayItem, removeArrayItem, updateArrayItem]);
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -187,7 +229,7 @@ const ResumeBuilder = ({ isDark }) => {
         {/* Template Selector */}
         <TemplateSwitcher 
           selectedTemplate={selectedTemplate}
-          setSelectedTemplate={setSelectedTemplate}
+          setSelectedTemplate={handleTemplateChange}
           templates={templates}
           isDark={isDark}
         />
@@ -205,92 +247,59 @@ const ResumeBuilder = ({ isDark }) => {
             isDark={isDark}
           />
           <ResumeManager 
-            resumeData={resumeData}
             onLoadResume={handleLoadResume}
-            onSaveResume={saveResumeData}
+            isDark={isDark}
+          />
+          <SaveAsButton 
+            resumeData={resumeData}
+            selectedTemplate={selectedTemplate}
+            resumeFontFamily={resumeFontFamily}
+            resumeFontSize={resumeFontSize}
             isDark={isDark}
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
+        {/* Auto Save Indicator */}
+        <AutoSaveIndicator 
+          isSaving={isSaving}
+          lastSaved={lastSaved}
+          isDark={isDark}
+        />
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Panel - Form */}
-          <div className="space-y-4 sm:space-y-6 order-2 lg:order-1">
+          <div className="space-y-6">
             {/* Section Navigation */}
             <SectionNavigation 
               sections={sections}
               activeSection={activeSection}
-              setActiveSection={setActiveSection}
+              onSectionChange={handleSectionChange}
               isDark={isDark}
             />
 
-            {/* Form Content */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeSection}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <FormSection
-                  section={activeSection}
-                  resumeData={resumeData}
-                  updateSection={updateSection}
-                  addArrayItem={addArrayItem}
-                  removeArrayItem={removeArrayItem}
-                  updateArrayItem={updateArrayItem}
-                  isDark={isDark}
-                  onAISuggestion={handleAISuggestion}
-                />
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Save As Button */}
-            <SaveAsButton isDark={isDark} />
+            {/* Form Section */}
+            <FormSection 
+              {...resumeBuilderProps}
+              isDark={isDark}
+              onAISuggestion={handleAISuggestion}
+            />
           </div>
 
-          {/* Right Panel - Preview */}
-          <div className="order-1 lg:order-2">
-            <div className="mb-4 flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center">
-              <label className="font-semibold text-sm sm:text-base">Font Style:
-                <select
-                  value={resumeFontFamily}
-                  onChange={e => setResumeFontFamily(e.target.value)}
-                  className={`ml-2 border rounded px-2 py-1 text-sm ${isDark ? 'bg-gray-800 text-white border-gray-600' : 'bg-white text-gray-900 border-gray-300'}`}
-                >
-                  <option value="Arial">Arial</option>
-                  <option value="Times New Roman">Times New Roman</option>
-                  <option value="Georgia">Georgia</option>
-                  <option value="Verdana">Verdana</option>
-                  <option value="Courier New">Courier New</option>
-                </select>
-              </label>
-              <label className="font-semibold text-sm sm:text-base">Font Size:
-                <input type="number" min={10} max={32} value={resumeFontSize} onChange={e => setResumeFontSize(Number(e.target.value))} className="ml-2 border rounded px-2 py-1 w-16 text-sm" />
-                <span className="ml-1">px</span>
-              </label>
-            </div>
-            <div className="h-[600px] sm:h-[800px] sticky top-4 sm:top-8">
-              <LivePreview 
-                resumeData={resumeData}
-                selectedTemplate={selectedTemplate}
-                isDark={isDark}
-                fontFamily={resumeFontFamily}
-                fontSize={resumeFontSize}
-              />
-            </div>
+          {/* Right Panel - Live Preview */}
+          <div className="sticky top-4">
+            <LivePreview 
+              resumeData={resumeData}
+              selectedTemplate={selectedTemplate}
+              resumeFontFamily={resumeFontFamily}
+              resumeFontSize={resumeFontSize}
+              isDark={isDark}
+            />
           </div>
         </div>
       </div>
-      
-      {/* Auto Save Indicator */}
-      <AutoSaveIndicator 
-        isDark={isDark}
-        lastSaved={lastSaved}
-        isSaving={isSaving}
-      />
     </div>
   );
 };
 
-export default ResumeBuilder; 
+export default React.memo(ResumeBuilder); 
